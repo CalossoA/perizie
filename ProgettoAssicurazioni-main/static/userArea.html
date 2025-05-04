@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Area Utente</title>
+  <link rel="icon" href="img/icoVallauri.png" type="image/png" />
+
+  <!-- Bootstrap & FontAwesome -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <!-- MapLibre -->
+  <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+  <!-- Toastr JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+  <!-- Custom JS -->
+  <script src="js/libreria.js"></script>
+  <script src="js/mappa.js"></script>
+  <script src="js/graphicEffects.js"></script>
+  <script src="js/index.js"></script>
+
+  <style>
+    :root {
+      --dark-bg: #1e1e2f;
+      --dark-card: #2c2f4a;
+      --dark-text: #e0e0e0;
+      --accent: #0dcaf0;
+    }
+
+    body {
+      background-color: var(--dark-bg);
+      color: var(--dark-text);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .navbar {
+      background-color: #12121c;
+    }
+
+    .navbar-brand,
+    .navbar-dark .navbar-nav .nav-link {
+      color: var(--dark-text) !important;
+    }
+
+    .table {
+      color: var(--dark-text); /* Imposta il colore del testo delle tabelle */
+      background-color: rgba(30, 30, 47, 0.7);
+      border-radius: 8px;
+      overflow: hidden;
+      border: none;
+      margin-top: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .table thead th {
+      background-color: rgba(18, 18, 28, 0.9);
+      color: var(--accent);
+      border-top: none;
+      border-bottom: 2px solid rgba(60, 60, 80, 0.5);
+      padding: 12px 15px;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+
+    .table tbody td {
+      border-top: 1px solid rgba(60, 60, 80, 0.3);
+      padding: 12px 15px;
+      vertical-align: middle;
+    }
+
+    .perizia-row {
+      transition: background-color 0.3s;
+    }
+
+    .perizia-row:hover {
+      background-color: rgba(50, 50, 70, 0.7) !important;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(18, 18, 28, 0.5);
+    }
+
+    .btn-modifica-perizia,
+    .btn-elimina-perizia {
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-modifica-perizia:hover,
+    .btn-elimina-perizia:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-modifica-perizia, 
+    .btn-elimina-perizia {
+      display: inline-block;
+      margin: 0 3px;
+      white-space: nowrap;
+      width: auto;  /* Impedisce l'espansione dei pulsanti */
+    }
+
+    .btn-modifica-perizia {
+      margin-right: 8px !important;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    #map {
+      width: 100%;
+      height: 500px;
+    }
+
+    /* Stili per i filtri */
+    .filter-list .list-group-item {
+      background-color: rgba(30, 30, 47, 0.7) !important;
+      color: #e0e0e0;
+      border: 1px solid rgba(60, 60, 80, 0.3);
+      margin: 4px 0;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .filter-list .list-group-item:hover {
+      background-color: rgba(50, 50, 70, 0.7) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    #filter {
+      transition: all 0.3s ease;
+    }
+
+    .filter-header {
+      background-color: rgba(18, 18, 28, 0.8);
+    }
+
+    /* Personalizzazione scrollbar per i filtri */
+    .filter-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .filter-body::-webkit-scrollbar-track {
+      background: rgba(30, 30, 47, 0.5);
+    }
+
+    .filter-body::-webkit-scrollbar-thumb {
+      background-color: #0dcaf0;
+      border-radius: 10px;
+    }
+
+    /* Garantisce che la colonna delle azioni abbia spazio sufficiente */
+    #tabella-perizie-container th:last-child,
+    #tabella-perizie-container td:last-child {
+      min-width: 220px;
+      width: 220px;
+      text-align: center;
+      white-space: nowrap;  /* Impedisce il wrapping dei pulsanti */
+    }
+
+    #resetFiltro {
+      background-color: #e4a11b;
+      color: #000;
+      transition: all 0.2s ease;
+      position: relative;
+      top: -1px;
+    }
+    
+    #resetFiltro:hover {
+      background-color: #f0ad4e;
+      transform: scale(1.05);
+    }
+    
+    /* Adatta lo stile del bottone filtri per mostrare meglio il nome dell'operatore */
+    #btnToggleFilters {
+      border-radius: 20px;
+      max-width: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Aggiungi questo a tutti i file per una migliore esperienza mobile */
+    @media (max-width: 768px) {
+      .card {
+        margin-bottom: 20px;
+      }
+      
+      h2, h3, .section-title {
+        font-size: 1.5rem;
+      }
+      
+      .modal-dialog {
+        margin: 10px;
+      }
+      
+      .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      
+      #map, #map-container {
+        height: 350px !important;
+      }
+      
+      .col-md-6 {
+        margin-bottom: 20px;
+      }
+      
+      .navbar-brand {
+        font-size: 1.2rem;
+      }
+      
+      .navbar-toggler {
+        border: none;
+        padding: 0.3rem 0.5rem;
+      }
+      
+      .navbar-toggler:focus {
+        outline: none;
+        box-shadow: none;
+      }
+      
+      .photo-gallery {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      
+      .filter-body {
+        max-height: 60vh;
+      }
+      
+      .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+      
+      /* Miglioramenti tablet */
+      @media (min-width: 769px) and (max-width: 992px) {
+        .photo-gallery {
+          grid-template-columns: repeat(3, 1fr) !important;
+        }
+        
+        #map, #map-container {
+          height: 400px !important;
+        }
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <a class="navbar-brand" href="#"><i class="fas fa-shield-alt"></i> Assicurazioni</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="#"><i class="fas fa-home"></i> Home</a>
+        </li>
+      </ul>
+      <button id="btnToggleFilters" class="btn btn-info"><i class="fas fa-filter"></i> Filtri</button>
+    </div>
+    <div class="ml-auto dropdown">
+      <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">
+          <span id="userName">Utente</span>
+          <img id="userProfilePic" src="img/default-profile.png" alt="Foto Profilo" class="rounded-circle"
+              style="width: 40px; height: 40px; object-fit: cover; margin-left: 10px;">
+      </a>
+      <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+          <a class="dropdown-item" href="#" id="btnChangeProfilePic">Cambia Foto Profilo</a>
+          <a class="dropdown-item text-danger" href="#" id="btnDeleteAccount">Elimina Account</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="#" id="btnLogout">Logout</a>
+      </div>
+  </div>
+  </nav>
+
+  <div class="container mt-4">
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" id="tab-gestione-utenti">Gestione Utenti</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" id="tab-mappa">Mappa</a>
+      </li>
+    </ul>
+
+    <!-- Sezione Gestione Utenti -->
+    <div id="gestione-utenti" class="section">
+      <h3 class="mt-4">Gestione Utenti</h3>
+      <button class="btn btn-primary mb-3" id="btn-apri-form">Crea Nuovo Utente</button>
+      <div id="form-creazione-utente" class="card p-3 mb-4" style="display: none;">
+        <form id="form-nuovo-utente">
+          <div class="form-group">
+            <label for="nome">Nome</label>
+            <input type="text" class="form-control" id="nome" placeholder="Inserisci il nome">
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" placeholder="Inserisci l'email">
+          </div>
+          <div class="form-group">
+            <label for="ruolo">Ruolo</label>
+            <select class="form-control" id="ruolo">
+              <option value="admin">Admin</option>
+              <option value="user">User</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-success" id="btn-crea-utente">Crea Utente</button>
+        </form>
+      </div>
+
+      <h4>Elenco Utenti</h4>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Ruolo</th>
+            <th>Azioni</th>
+          </tr>
+        </thead>
+        <tbody id="tabella-utenti">
+          <!-- Le righe saranno popolate dinamicamente -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sezione Mappa -->
+    <div id="mappa" class="section active">
+      <h3 class="mt-4">Mappa</h3>
+      <div id="map"></div>
+      <div id="filter" class="mt-3" style="display: none; position: absolute; top: 60px; right: 10px; width: 300px; z-index: 1000; background: rgba(44, 47, 74, 0.95); padding: 0; border-radius: 8px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4); overflow: hidden; color: #e0e0e0; backdrop-filter: blur(10px);">
+        <div class="filter-header d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
+          <h5 class="m-0"><i class="fas fa-filter mr-2"></i> Filtri Operatori</h5>
+          <button type="button" class="btn-close-filter" style="background: none; border: none; color: #e0e0e0; cursor: pointer;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="filter-body p-2" style="max-height: 400px; overflow-y: auto;">
+          <ul class="list-group filter-list">
+            <!-- I filtri saranno popolati dinamicamente -->
+          </ul>
+        </div>
+      </div>
+      <h4 class="mt-4">Elenco Perizie</h4>
+      <table id="tabella-perizie-container" class="table table-striped">
+        <thead>
+          <tr>
+            <th>Operatore</th>
+            <th>Descrizione</th>
+            <th>Data</th>
+            <th class="text-center">Azioni</th>
+          </tr>
+        </thead>
+        <tbody id="tabella-perizie">
+          <!-- Le righe verranno popolate dinamicamente -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modale Dettagli Perizia -->
+  <div class="modal fade" id="modalDettagli" tabindex="-1" role="dialog" aria-labelledby="modalDettagliLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalDettagliLabel" style="color: #0d1a26;">Dettagli Perizia</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" style="color: #0d1a26;"> <!-- Testo blu scuro -->
+          <div id="dettagliPerizia">
+            <p><strong>Data e Ora:</strong> <span id="dataOra">Caricamento...</span></p>
+            <p><strong>Indirizzo:</strong> <span id="indirizzo">Caricamento...</span></p>
+            <div class="form-group">
+              <label for="descrizionePerizia"><strong>Descrizione:</strong></label>
+              <div class="d-flex align-items-center">
+                <textarea class="form-control mr-3" id="descrizionePerizia" rows="3"></textarea>
+                <button type="button" class="btn btn-success" id="salvaDescrizione">
+                  <i class="fas fa-save"></i> Salva
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="commentoFoto"><strong>Commento:</strong></label>
+              <div class="d-flex align-items-center">
+                <textarea class="form-control mr-3" id="commentoFoto" rows="2"></textarea>
+                <button type="button" class="btn btn-primary" id="salvaCommento">
+                  <i class="fas fa-save"></i> Salva
+                </button>
+              </div>
+            </div>
+            <div>
+              <label><strong>Foto:</strong></label>
+              <div id="fotoContainer" class="d-flex flex-wrap"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Chiudi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Conferma Eliminazione -->
+  <div class="modal fade" id="modalConfermaEliminazione" tabindex="-1" role="dialog" aria-labelledby="modalConfermaEliminazioneLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalConfermaEliminazioneLabel">Conferma Eliminazione</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Per eliminare questa perizia, inserisci la password dell'admin:</p>
+          <div class="form-group">
+            <label for="passwordAdmin"><strong>Password Admin:</strong></label>
+            <input type="password" class="form-control" id="passwordAdmin" placeholder="Inserisci la password">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Annulla</button>
+          <button type="button" class="btn btn-danger" id="confermaEliminazione">Elimina</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Conferma Eliminazione Account -->
+  <div class="modal fade" id="modalConfermaEliminazioneAccount" tabindex="-1" role="dialog" aria-labelledby="modalConfermaEliminazioneAccountLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalConfermaEliminazioneAccountLabel">Conferma Eliminazione Account</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Per eliminare questo account, inserisci la password dell'admin:</p>
+          <div class="form-group">
+            <label for="passwordAdminAccount"><strong>Password Admin:</strong></label>
+            <input type="password" class="form-control" id="passwordAdminAccount" placeholder="Inserisci la password">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Annulla</button>
+          <button type="button" class="btn btn-danger" id="confermaEliminazioneAccount">Elimina</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function () {
+      // Gestione delle sezioni
+      $(".nav-link").on("click", function () {
+        $(".nav-link").removeClass("active");
+        $(this).addClass("active");
+
+        $(".section").removeClass("active");
+        if ($(this).attr("id") === "tab-gestione-utenti") {
+          $("#gestione-utenti").addClass("active");
+        } else {
+          $("#mappa").addClass("active");
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>
