@@ -140,7 +140,7 @@ app.post("/api/login", connectToDatabase, (req: any, res: Response) => {
         bcrypt.compare(
           password,
           dbUser.password,
-          function (err: Error, success: boolean) {
+          function (err: Error | undefined, success: boolean) {
             if (err) {
               console.log("Errore bcrypt:" + err.message);
               res.status(500).send("Errore bcrypt");
@@ -895,7 +895,7 @@ app.post(
         indirizzo
       )}`;
       const response = await fetch(geocodingUrl);
-      const data = await response.json();
+      const data = (await response.json()) as any[];
 
       if (!data || data.length === 0) {
         return res.status(400).send("Indirizzo non valido.");
@@ -1098,7 +1098,7 @@ app.get("/api/operatoriConPerizie", async (req: any, res: Response) => {
 
     // Conta le perizie per ogni operatore
     const operatoriConPerizie = await Promise.all(
-      operatori.map(async (operatore) => {
+      operatori.map(async (operatore:any) => {
         const count = await collectionPerizie.countDocuments({
           codOperatore: operatore._id.toString(),
         });
@@ -1181,7 +1181,7 @@ app.post("/api/resetPassword", (req: any, res: Response) => {
         collection.updateOne(
           { _id: new ObjectId(userId) },
           { $set: { password: hash, resetPassword: false } },
-          function (err, result) {
+          function (err:any, result:any) {
             if (err) {
               console.error("Errore durante il reset della password:", err);
               res.status(500).send("Errore durante il reset della password.");
